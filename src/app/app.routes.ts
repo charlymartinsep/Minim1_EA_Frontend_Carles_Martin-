@@ -4,6 +4,7 @@ import { UsuarisComponent } from './components/usuaris/usuaris.component';
 import { ExperienciaComponent } from './components/experiencia/experiencia.component';
 import { HomeComponent } from './components/home/home.component';
 import { VinosComponent } from './components/vinos/vinos.component';
+import { ComentarisComponent } from './components/comentaris/comentaris.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' }, // Redirige a Home por defecto
@@ -11,6 +12,7 @@ export const routes: Routes = [
   { path: 'usuaris', component: UsuarisComponent },
   { path: 'experiencia', component: ExperienciaComponent },
   { path: 'vinos', component: VinosComponent },
+  { path: 'comentaris', component: ComentarisComponent },
   { path: '**', redirectTo: 'home' } // Redirige cualquier ruta desconocida a Home
 ];
 

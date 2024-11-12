@@ -1,8 +1,9 @@
-export interface Experiencia {
-  _id?: string;  // Propiedad opcional _id para el ID de la experiencia
-  owner: string; // ID del propietario (usuario)
-  participants: string[]; // Array de IDs de participantes
-  description: string; // Descripción de la experiencia
-}
+import { Comentari } from './comentaris.model';  // Importas la interfaz Comentario
 
-  
+export interface Experiencia {
+  _id?: string;
+  owner: string;
+  participants: string[];
+  description: string;
+  comentaris?: Comentari[];  // Usas el array de Comentarios aquí
+}

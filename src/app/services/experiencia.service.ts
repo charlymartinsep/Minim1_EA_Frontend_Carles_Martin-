@@ -26,4 +26,10 @@ export class ExperienciaService {
   deleteExperiencia(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+  // experiencia.service.ts
+addComentarioToExperiencia(experienceId: string, comentarioId: string): Observable<Experiencia> {
+  return this.http.patch<Experiencia>(`${this.apiUrl}/${experienceId}/comentarios`, { comentarioId });
+}
+
+
 }

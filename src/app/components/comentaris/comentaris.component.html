@@ -1,0 +1,15 @@
+<div class="container">
+  <!-- Lista de comentarios -->
+  <div class="comentarios-lista" *ngIf="comentaris.length > 0">
+    <h2>Lista de Comentarios</h2>
+    <ul>
+      <li *ngFor="let comentario of comentaris; let i = index">
+        <div class="comentario-info">
+          <p><strong>Texto del comentario:</strong> {{ comentario.texto }}</p>
+          <p><strong>Autor:</strong> {{ comentario.autor || 'Desconocido' }}</p>
+          <p><strong>Fecha:</strong> {{ comentario.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>

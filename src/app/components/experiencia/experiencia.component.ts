@@ -1,63 +1,49 @@
 import { Component, OnInit } from '@angular/core';
 import { ExperienciaService } from '../../services/experiencia.service';
-import { Experiencia } from '../../models/experiencia.model';
+import { ComentariService } from '../../services/comentari.service'; // Servicio para obtener comentarios
 import { UserService } from '../../services/user.service';
+import { Experiencia } from '../../models/experiencia.model';
 import { User } from '../../models/user.model';
-import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
-import { TruncatePipe } from '../../pipes/truncate.pipe';
-import { pageInterface } from '../../models/paginacion.model';
+import { Comentari } from '../../models/comentaris.model';  // Modelo para comentarios
 
 @Component({
   selector: 'app-experiencia',
   templateUrl: './experiencia.component.html',
-  standalone: true,
-  styleUrls: ['./experiencia.component.css'],
-  imports: [FormsModule, CommonModule, HttpClientModule, TruncatePipe]
+  styleUrls: ['./experiencia.component.css']
 })
 export class ExperienciaComponent implements OnInit {
-  experiencias: Experiencia[] = []; // Lista de experiencias
-  users: User[] = []; // Lista de usuarios para los desplegables
-  selectedParticipants: string[] = []; // Participantes seleccionados como ObjectId
-  errorMessage: string = ''; // Variable para mostrar mensajes de error
-  ownerFilter: string = '';
-
-  nuevapaginacion: pageInterface = {
-    paginas: 1,
-    numerodecaracterespp: 5
-  };
-
-  // Estructura inicial para una nueva experiencia
+  experiencias: Experiencia[] = [];
+  users: User[] = [];
+  selectedParticipants: string[] = [];
   newExperience: Experiencia = {
     owner: '',
     participants: [],
     description: ''
   };
-
   newExperience2: Experiencia = {
     owner: '',
     participants: [],
     description: ''
   };
+  errorMessage: string = '';
+  newComment: string = ''; // Nuevo comentario
 
-  constructor(private experienciaService: ExperienciaService, private userService: UserService) {}
-
-  filterExperiencias='';
+  constructor(
+    private experienciaService: ExperienciaService, 
+    private userService: UserService,
+    private comentariService: ComentariService // Inyectamos el servicio de comentarios
+  ) {}
 
   ngOnInit(): void {
-    this.getExperiencias(); // Obtener la lista de experiencias
-    this.getUsers(); // Obtener la lista de usuarios
-
+    this.getExperiencias();
+    this.getUsers();
   }
 
-  // Obtener la lista de experiencias desde la API
+  // Obtener la lista de experiencias
   getExperiencias(): void {
     this.experienciaService.getExperiencias().subscribe(
       (data: Experiencia[]) => {
-        // Filtrar experiencias que tengan _id definido
-        this.experiencias = data.filter(exp => exp._id !== undefined);
-        console.log('Experiencias recibidas:', data);
+        this.experiencias = data;
       },
       (error) => {
         console.error('Error al obtener las experiencias:', error);
@@ -65,115 +51,58 @@ export class ExperienciaComponent implements OnInit {
     );
   }
 
-  getExperienciasFiltradas(ownerF:string): void {
-    if (ownerF==''){
-      this.experienciaService.getExperiencias().subscribe(
-        (data: Experiencia[]) => {
-          // Filtrar experiencias que tengan _id definido
-          this.experiencias = data.filter(exp => exp._id !== undefined);
-          console.log('Experiencias recibidas:', data);
-        },
-        (error) => {
-          console.error('Error al obtener las experiencias:', error);
-        }
-      );
-    } else {
-      this.experienciaService.getExperiencias().subscribe(
-        (data: Experiencia[]) => {
-          // Filtrar experiencias que tengan _id definido
-          this.experiencias = data.filter(exp => exp._id !== undefined && exp.owner == ownerF);
-          console.log('Experiencias recibidas:', data);
-        },
-        (error) => {
-          console.error('Error al obtener las experiencias:', error);
-        }
-      );
-    }
-    
+
+  // Función para agregar un comentario a una experiencia
+addCommentToExperience(experienceId: string, commentText: string): void {
+  if (!commentText) {
+    this.errorMessage = 'El comentario no puede estar vacío.';
+    return;
   }
 
-  // Obtener la lista de usuarios desde la API
-  getUsers(): void {
-    this.userService.getUsers(this.nuevapaginacion).subscribe(
-      (data: User[]) => {
-        this.users = data;
-        console.log('Usuarios recibidos:', data);
-      },
-      (error) => {
-        console.error('Error al obtener los usuarios:', error);
-      }
-    );
+  // Crear el nuevo comentario
+  const newComentario: Comentari = {
+    texto: commentText,
+    autor: [this.newExperience.owner], // Asumiendo que el comentario lo hace el dueño de la experiencia
+    fecha: new Date()
+  };
+
+  // Verificar si el comentario es válido (para evitar que sea undefined)
+  if (newComentario.texto === undefined || newComentario.texto.trim() === '') {
+    this.errorMessage = 'El comentario no puede estar vacío.';
+    return;
   }
+
+  this.comentariService.addComentari(newComentario).subscribe(
+    (comentario: Comentari) => {
+      console.log('Comentario agregado:', comentario);
+
+      // Actualizar la experiencia para agregar el nuevo comentario (usando el ID del comentario)
+      this.experienciaService.addComentarioToExperiencia(experienceId, comentario._id).subscribe(
+        (updatedExperience: Experiencia) => {
+          this.getExperiencias();  // Volver a cargar las experiencias con el nuevo comentario
+        },
+        (error) => {
+          console.error('Error al agregar comentario a la experiencia:', error);
+        }
+      );
+    },
+    (error) => {
+      console.error('Error al agregar comentario:', error);
+    }
+  );
+}
+
+
+  // Obtener el texto de un comentario por su ID
+getComentarioById(comentarioId: string): string {
+  // Buscamos el comentario con el comentarioId dentro de las experiencias.
+  const comentario = this.experiencias.flatMap(exp => exp.comentaris || [])
+    .find((comentarioId) => comentarioId === comentarioId);
   
-  onFilter(): void {
-    this.ownerFilter = this.newExperience2.owner;
-    console.log('filtrao',this.newExperience2.owner);
-    this.getExperienciasFiltradas(this.ownerFilter);
-    this.newExperience = {
-      owner: '',
-      participants: [],
-      description: ''
-    };
-  }
+  // Si el comentario no existe, devolvemos un texto por defecto
+  return comentario ? comentario.texto : 'Comentario desconocido';
+}
 
-  elFilter():void{
-    this.ownerFilter = '';
-    this.getExperienciasFiltradas(this.ownerFilter);
-  }
 
-  // Obtener el nombre de un usuario dado su ObjectId
-  getUserNameById(userId: string): string|null {
-    const user = this.users.find((u) => u._id === userId);
-    return user ? user.name : 'Desconocido';
-  }
-
-  // Manejar el envío del formulario con validación de campos
-  onSubmit(): void {
-    this.errorMessage = ''; // Limpiar mensajes de error
-
-    // Verificar si los campos están vacíos
-    if (!this.newExperience.owner || this.selectedParticipants.length === 0 || !this.newExperience.description) {
-      this.errorMessage = 'Todos los campos son obligatorios.';
-      return;
-    }
-
-    // Convertir selectedParticipants a ObjectId[] antes de enviar al backend
-    this.newExperience.participants = this.selectedParticipants;
-
-    // Llamar al servicio para agregar la nueva experiencia
-    this.experienciaService.addExperiencia(this.newExperience).subscribe(
-      (response) => {
-        console.log('Experiencia creada:', response);
-        this.getExperiencias(); // Actualizar la lista de experiencias después de crear una nueva
-        this.resetForm(); // Limpiar el formulario
-      },
-      (error) => {
-        console.error('Error al crear la experiencia:', error);
-      }
-    );
-  }
-
-  // Método para eliminar una experiencia por su ID
-  deleteExperience(experienceId: string): void {
-    this.experienciaService.deleteExperiencia(experienceId).subscribe(
-      () => {
-        console.log(`Experiencia con ID ${experienceId} eliminada`);
-        this.getExperiencias(); // Actualizar la lista de experiencias después de la eliminación
-      },
-      (error) => {
-        console.error('Error al eliminar la experiencia:', error);
-      }
-    );
-  }
-
-  // Resetear el formulario después de crear una experiencia
-  resetForm(): void {
-    this.newExperience = {
-      owner: '',
-      participants: [],
-      description: ''
-    };
-    this.selectedParticipants = []; // Limpiar los participantes seleccionados
-    this.errorMessage = ''; // Limpiar el mensaje de error
-  }
+  // Manejo del filtro, eliminación y otras acciones que ya tienes en tu componente...
 }

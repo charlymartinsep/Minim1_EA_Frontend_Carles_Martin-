@@ -58,16 +58,28 @@
     <ul>
       <li *ngFor="let experiencia of experiencias">
         <h3>Propietario: {{ getUserNameById(experiencia.owner) }}</h3>
-        <!-- <p>Descripción: {{ experiencia.description | truncate: 60}}</p> -->
-        <p>Descripción: {{ experiencia.description}}</p>
+        <p>Descripción: {{ experiencia.description }}</p>
         <h4>Participantes:</h4>
         <ul>
           <li *ngFor="let participant of experiencia.participants">
             {{ getUserNameById(participant) }}
           </li>
         </ul>
+
+        <!-- Sección para mostrar y agregar comentarios -->
+        <div *ngIf="experiencia.comentaris && experiencia.comentaris.length > 0">
+          <h5>Comentarios:</h5>
+          <ul>
+            <li *ngFor="let comentarioId of experiencia.comentaris">
+              {{ getComentarioById(comentarioId) }}
+            </li>
+          </ul>
+        </div>
+
+        
+
         <!-- Botón para eliminar la experiencia -->
-        <button *ngIf="experiencia._id !== undefined" (click)="deleteExperience(experiencia._id)">Eliminar</button>
+        <button *ngIf="experiencia._id !== undefined" (click)="eliminar(experiencia._id)">Eliminar</button>
       </li>
     </ul>
   </div>
